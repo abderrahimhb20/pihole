@@ -88,16 +88,24 @@ sudo apt install -y build-essential libpcap-dev libpcre3-dev \
 ```
 
 ### 2. Install DAQ (Data Acquisition library)
+`autoreconf` is missing. Install the autotools first:
+
 ```bash
-cd /tmp
-git clone https://github.com/snort3/libdaq.git
-cd libdaq
+sudo apt install -y autoconf automake libtool
+```
+
+Then retry the bootstrap and build:
+
+```bash
+cd /tmp/libdaq
 ./bootstrap
 ./configure
-make
+make -j$(nproc)
 sudo make install
 sudo ldconfig
 ```
+
+You should see `configure` generate successfully and `make` compile without errors. Paste any output if it still fails.
 
 ### 3. Install Snort 3
 ```bash

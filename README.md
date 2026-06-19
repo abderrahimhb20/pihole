@@ -39,9 +39,38 @@ The interactive installer will walk you through:
 - Installing the web server (lighttpd)
 
 ### 4. Set the admin password
+The error is a **permissions problem** on `/etc/pihole/versions`. Fix it:
+
+— Fix the permissions
 ```bash
-pihole -a -p
+sudo chown -R pihole:pihole /etc/pihole
+sudo chmod -R 755 /etc/pihole
 ```
+
+ — Set the password
+```bash
+sudo pihole setpassword
+```
+> The command changed in Pi-hole v6 — it's `setpassword` now, not `-a -p`
+
+ — Verify Pi-hole is running
+```bash
+sudo pihole status
+```
+
+---
+
+If step 1 didn't fully fix it:
+```bash
+# Check who owns the file
+ls -la /etc/pihole/
+
+# Nuclear fix — reset all pihole file ownership
+sudo chown -R pihole:pihole /etc/pihole /opt/pihole /var/log/pihole* 2>/dev/null
+sudo systemctl restart pihole-FTL
+```
+
+Then retry `sudo pihole setpassword`.
 
 ### 5. Access the dashboard
 Open a browser: `http://<your-server-ip>/admin`

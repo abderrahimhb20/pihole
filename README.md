@@ -108,16 +108,32 @@ sudo ldconfig
 You should see `configure` generate successfully and `make` compile without errors. Paste any output if it still fails.
 
 ### 3. Install Snort 3
+Missing `libpcre2`. Install it and retry:
+
+Install pcre2 + any other likely missing deps in one shot
 ```bash
-cd /tmp
-git clone https://github.com/snort3/snort3.git
-cd snort3
-./configure_cmake.sh --prefix=/usr/local --enable-tcmalloc
+sudo apt install -y libpcre2-dev libpcre3-dev libsafec-dev uuid-dev libmnl-dev
+```
+
+Clean and reconfigure
+```bash
+cd /tmp/snort3
+rm -rf build
+./configure_cmake.sh --prefix=/usr/local
+```
+
+If configure succeeds, build
+```bash
 cd build
 make -j$(nproc)
 sudo make install
 sudo ldconfig
+snort --version
 ```
+
+---
+
+> CMake checks dependencies one at a time, so you may hit one more missing lib. If it fails again, just paste the next `CMake Error` line and I'll give you the exact `apt install` for it.
 
 ### 4. Verify installation
 ```bash

@@ -210,8 +210,77 @@ sudo systemctl status snort
 
 ---
 
-## Integration Tip
+The config has a `RULE_PATH` variable that isn't defined. Fix the `snort.lua`:
 
-Point your router's **DNS to the Pi-hole IP** so it filters DNS queries network-wide. Snort monitors traffic on the **same interface** (`eth0`) — together they give you DNS-level ad/tracker blocking plus network intrusion detection on a single Ubuntu server.
+**Step 1 — Rewrite the config correctly**
+```bash
+sudo tee /etc/snort/snort.lua << 'EOF'
+-- Basic Snort 3 config
 
-Let me know if you want to add community Snort rules (Emerging Threats), set up logging to a SIEM, or configure Pi-hole with custom blocklists.
+HOME_NET = '192.168.1.0/24'
+EXTERNAL_NET = '!$HOME_NET'
+
+ips =
+{
+  rules = [[
+    include /etc/snort/rules/local.rules
+  ]],
+  enable_builtin_rules = true,
+}
+
+alert_fast = { file = true }
+EOF
+```
+
+**Step 2 — Test the config**
+```bash
+sudo snort -c /etc/snort/snort.lua --daq-dir /usr/local/lib/daq -T
+```
+
+You should see `Snort successfully validated the configuration` at the end.
+
+**Step 3 — Restart the service**
+```bash
+sudo systemctl restart snort
+sudo systemctl status snort
+```
+
+---
+
+> **Note:** In Snort 3, `RULE_PATH` is not a built-in variable — rules must be included with a full path using the `rules` key inside the `ips` block, not `include = RULE_PATH .. '/local.rules'`. That was the root cause of the error.
+Good progress — config loads now. Two remaining issues: `$HOME_NET` undefined in the rules file, and `eth0` may not be your interface name. Fix both:
+
+**Step 1 — Fix the rule (use literal IP, not variable)**
+```bash
+sudo tee /etc/snort/rules/local.rules << 'EOF'
+alert icmp any any -> 192.168.1.0/24 any (msg:"ICMP Test"; sid:1000001; rev:1;)
+EOF
+```
+
+**Step 2 — Check your actual interface name**
+```bash
+ip link show
+```
+It's likely `ens33`, `enp0s3`, or similar — not `eth0` on Ubuntu 22.04.
+
+**Step 3 — Test config (should pass cleanly now)**
+```bash
+sudo snort -c /etc/snort/snort.lua --daq-dir /usr/local/lib/daq -T
+```
+
+**Step 4 — Update the systemd service with the correct interface**
+```bash
+# Replace eth0 with your actual interface, e.g. ens33
+sudo sed -i 's/-i eth0/-i ens33/' /etc/systemd/system/snort.service
+sudo systemctl daemon-reload
+```
+
+**Step 5 — Start and verify**
+```bash
+sudo systemctl restart snort
+sudo systemctl status snort
+```
+
+---
+
+> **Note:** Snort 3 rules don't expand Lua variables like `$HOME_NET` — that variable only works inside the Lua config itself, not in `.rules` files loaded via the `rules` block. Use literal CIDRs in rule files, or define them with `HOME_NET` in the `ips` block directly.

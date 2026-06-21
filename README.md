@@ -117,21 +117,24 @@ Install pcre2 + any other likely missing deps in one shot
 sudo apt install -y libpcre2-dev libpcre3-dev libsafec-dev uuid-dev libmnl-dev
 ```
 
-Clean and reconfigure
-```bash
-cd /tmp/snort3
-rm -rf build
-./configure_cmake.sh --prefix=/usr/local
-```
 
-If configure succeeds, build
+Then immediately continue with Snort3 (don't reboot):
 ```bash
+cd /tmp
+git clone https://github.com/snort3/snort3.git
+cd snort3
+./configure_cmake.sh --prefix=/usr/local
 cd build
 make -j$(nproc)
 sudo make install
 sudo ldconfig
 snort --version
 ```
+
+> **Tip:** Next time, build in a persistent directory like `~/src` instead of `/tmp` so reboots don't wipe your work:
+> ```bash
+> mkdir -p ~/src && cd ~/src
+> ```
 
 ---
 

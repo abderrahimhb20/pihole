@@ -97,7 +97,9 @@ sudo apt install -y autoconf automake libtool
 Then retry the bootstrap and build:
 
 ```bash
-cd /tmp/libdaq
+cd /tmp
+git clone https://github.com/snort3/libdaq.git
+cd libdaq
 ./bootstrap
 ./configure
 make -j$(nproc)
